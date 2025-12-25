@@ -1,6 +1,23 @@
-﻿namespace MangaMan.ViewModels;
+﻿using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-public partial class MainWindowViewModel : ViewModelBase
+namespace MangaMan.ViewModels;
+
+public partial class MainWindowViewModel : ObservableObject
 {
-    public string Greeting { get; } = "Welcome to Avalonia!";
+    public required HomeViewModel HomeViewModel { get; set; }
+
+    public required ObservableCollection<ViewModelBase> Tabs { get; init; }
+
+    public static MainWindowViewModel Create()
+    {
+        var homeViewModel = new HomeViewModel();
+
+        return new MainWindowViewModel()
+        {
+            HomeViewModel = homeViewModel,
+            Tabs = [homeViewModel],
+        };
+    }
 }

@@ -1,6 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="https://github.com/projektanker/icons.avalonia"
         xmlns:vm="using:MangaMan.ViewModels"
+        xmlns:v="using:MangaMan.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -12,9 +14,20 @@
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
+        <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <TabControl ItemsSource="{Binding Tabs}">
+        <TabControl.DataTemplates>
+            <DataTemplate DataType="vm:HomeViewModel">
+                <v:HomeView DataContext="{Binding}"/>
+            </DataTemplate>
+        </TabControl.DataTemplates>
 
+        <TabControl.ItemTemplate>
+            <DataTemplate DataType="vm:PageViewModelBase">
+                <TextBlock Text="{Binding HeaderText}"/>
+            </DataTemplate>
+        </TabControl.ItemTemplate>
+    </TabControl>
 </Window>
