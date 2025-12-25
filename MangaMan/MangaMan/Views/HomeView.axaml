@@ -1,8 +1,46 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MangaMan.ViewModels"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:HomeViewModel"
              x:Class="MangaMan.Views.HomeView">
-    Welcome to Avalonia!
+    <Grid ColumnDefinitions="350,Auto,*">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+            <TextBlock Text="Synced Folders" FontSize="20" />
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <Button i:Attached.Icon="fa-folder-plus" ToolTip.Tip="Add new folder to sync"
+                        Command="{Binding AddFolderCommand}"
+                        CommandParameter="{Binding $parent[TopLevel].StorageProvider}" />
+            </StackPanel>
+
+            <TreeView Name="SyncFolderList" Grid.Row="2" ItemsSource="{Binding SyncFolders}"
+                      SelectedItem="{Binding SelectedSyncFolder}">
+                <TreeView.ItemTemplate>
+                    <TreeDataTemplate DataType="vm:SyncFolderViewModel" ItemsSource="{Binding Children}">
+                        <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}" />
+                    </TreeDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </Grid>
+        <GridSplitter Grid.Column="1" />
+
+        <ListBox Grid.Column="2"
+                 ItemsSource="{Binding SelectedSyncFolder.Archives,FallbackValue={x:Null}}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="vm:ArchiveViewModel">
+                    <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
 </UserControl>

@@ -13,20 +13,25 @@ namespace MangaMan.Service;
 public static class ArchiveService
 {
     private static readonly string[] ArchiveExtensions = [".zip", ".cbz"];
+    private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png"];
 
     public static IArchiveReader OpenArchiveAsync(string path)
     {
-        return IsFileArchive(path)
+        return IsArchiveFile(path)
             ? ZipArchiveReader.Create(path)
             : FolderArchiveReader.Create(path);
     }
 
-    internal static bool IsFileArchive(string path)
-    {
-        return ArchiveExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
-    }
+    internal static bool IsArchiveFile(string path) =>
+        ArchiveExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
 
-    internal static bool IsFileArchive(FileInfo path) => IsFileArchive(path.Name);
+    internal static bool IsArchiveFile(FileInfo file) => ArchiveExtensions.Contains(file.Extension.ToLowerInvariant());
+
+    internal static bool IsImageFile(string path) =>
+        ImageExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
+
+    internal static bool IsImageFile(FileInfo file) =>
+        ImageExtensions.Contains(file.Extension.ToLowerInvariant());
 }
 
 public interface IArchiveReader
@@ -51,7 +56,7 @@ public class ZipArchiveReader : IArchiveReader, IDisposable, IAsyncDisposable
     {
         var archive = new ZipArchive(File.OpenRead(path), ZipArchiveMode.Read);
         var images = archive.Entries
-            .Where(entry => ArchiveService.IsFileArchive(entry.Name))
+            .Where(entry => ArchiveService.IsArchiveFile(entry.Name))
             .Select(entry => entry.FullName)
             .ToList();
 
@@ -104,7 +109,7 @@ public class FolderArchiveReader : IArchiveReader
     {
         var folder = new DirectoryInfo(path);
         var images = folder.EnumerateFiles()
-            .Where(ArchiveService.IsFileArchive)
+            .Where(ArchiveService.IsArchiveFile)
             .Select(f => f.FullName)
             .ToList();
 

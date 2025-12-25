@@ -10,6 +10,8 @@ public partial class MainWindowViewModel : ObservableObject
 
     public required ObservableCollection<ViewModelBase> Tabs { get; init; }
 
+    [ObservableProperty] private bool _isWorking = false;
+
     public static MainWindowViewModel Create()
     {
         var homeViewModel = new HomeViewModel();
