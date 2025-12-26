@@ -15,7 +15,7 @@ public static class ArchiveService
     private static readonly string[] ArchiveExtensions = [".zip", ".cbz"];
     private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png"];
 
-    public static IArchiveReader OpenArchiveAsync(string path)
+    public static IArchiveReader OpenArchive(string path)
     {
         return IsArchiveFile(path)
             ? ZipArchiveReader.Create(path)
@@ -56,8 +56,9 @@ public class ZipArchiveReader : IArchiveReader, IDisposable, IAsyncDisposable
     {
         var archive = new ZipArchive(File.OpenRead(path), ZipArchiveMode.Read);
         var images = archive.Entries
-            .Where(entry => ArchiveService.IsArchiveFile(entry.Name))
+            .Where(entry => ArchiveService.IsImageFile(entry.Name))
             .Select(entry => entry.FullName)
+            .Order()
             .ToList();
 
         return new ZipArchiveReader(archive, images);
@@ -109,8 +110,9 @@ public class FolderArchiveReader : IArchiveReader
     {
         var folder = new DirectoryInfo(path);
         var images = folder.EnumerateFiles()
-            .Where(ArchiveService.IsArchiveFile)
+            .Where(ArchiveService.IsImageFile)
             .Select(f => f.FullName)
+            .Order()
             .ToList();
 
         return new FolderArchiveReader(folder, images);

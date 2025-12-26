@@ -28,8 +28,14 @@
         </Grid>
         <GridSplitter Grid.Column="1" />
 
-        <ListBox Grid.Column="2"
+        <ListBox Grid.Column="2" Name="ArchiveListView"
                  ItemsSource="{Binding SelectedSyncFolder.Archives,FallbackValue={x:Null}}">
+            <ListBox.KeyBindings>
+                <KeyBinding Gesture="Space"
+                            Command="{Binding #ArchiveListView.SelectedItem.(vm:ArchiveViewModel).OpenArchiveCommand}" />
+                <KeyBinding Gesture="Enter"
+                            Command="{Binding #ArchiveListView.SelectedItem.(vm:ArchiveViewModel).OpenArchiveCommand}" />
+            </ListBox.KeyBindings>
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <VirtualizingStackPanel Orientation="Vertical" />
@@ -38,7 +44,7 @@
 
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="vm:ArchiveViewModel">
-                    <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}" />
+                    <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}" PointerPressed="ArchivePointerPressed"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

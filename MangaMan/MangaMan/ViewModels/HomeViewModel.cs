@@ -27,15 +27,11 @@ public partial class HomeViewModel : PageViewModelBase
 
     [ObservableProperty] private SyncFolderViewModel? _selectedSyncFolder;
 
-    public HomeViewModel()
+    public async Task Initialize()
     {
-        _isWorking = true;
-        ReadFoldersFromDbAsync()
-            .ContinueWith(task =>
-            {
-                SyncFolders = task.Result;
-                IsWorking = false;
-            });
+        IsWorking = true;
+        SyncFolders = await ReadFoldersFromDbAsync();
+        IsWorking = false;
     }
 
     [RelayCommand(CanExecute = nameof(IsNotWorking))]
@@ -78,10 +74,10 @@ public partial class HomeViewModel : PageViewModelBase
             vm.LoadArchivesCommand.Execute(null);
     }
 
-    private static async Task<List<SyncFolderViewModel>> ReadFoldersFromDbAsync() =>
+    private async Task<List<SyncFolderViewModel>> ReadFoldersFromDbAsync() =>
         await ReadFoldersFromDbAsync(new MangaManDbContext());
 
-    private static async Task<List<SyncFolderViewModel>> ReadFoldersFromDbAsync(MangaManDbContext ctx,
+    private async Task<List<SyncFolderViewModel>> ReadFoldersFromDbAsync(MangaManDbContext ctx,
         Guid? parentId = null)
     {
         var folderIterator = ctx.SyncFolders
@@ -93,6 +89,7 @@ public partial class HomeViewModel : PageViewModelBase
         {
             folders.Add(new SyncFolderViewModel()
             {
+                MainWindowVM = MainWindowVM,
                 SyncFolderId = folder.Id,
                 Name = folder.Name,
                 Path = folder.Path,
@@ -129,6 +126,7 @@ public partial class SyncFolderViewModel : ViewModelBase
             .ToAsyncEnumerable()
             .Select(a => new ArchiveViewModel()
             {
+                MainWindowVM = MainWindowVM,
                 ArchiveId = a.Id,
                 Name = a.Name,
                 Path = a.Path,
@@ -138,9 +136,15 @@ public partial class SyncFolderViewModel : ViewModelBase
     }
 }
 
-public class ArchiveViewModel
+public partial class ArchiveViewModel : ViewModelBase
 {
     public required Guid ArchiveId { get; init; }
     public required string Name { get; init; }
     public required string Path { get; init; }
+
+    [RelayCommand]
+    private void OpenArchive()
+    {
+        MainWindowVM.OpenArchive(Path);
+    }
 }

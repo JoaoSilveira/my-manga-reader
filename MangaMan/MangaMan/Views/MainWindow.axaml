@@ -17,16 +17,20 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <TabControl ItemsSource="{Binding Tabs}">
+    <TabControl ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab, Mode=TwoWay}">
         <TabControl.DataTemplates>
             <DataTemplate DataType="vm:HomeViewModel">
-                <v:HomeView DataContext="{Binding}"/>
+                <v:HomeView DataContext="{Binding}" />
+            </DataTemplate>
+
+            <DataTemplate DataType="vm:ArchiveReaderViewModel">
+                <v:ArchiveReaderView DataContext="{Binding}" />
             </DataTemplate>
         </TabControl.DataTemplates>
 
         <TabControl.ItemTemplate>
             <DataTemplate DataType="vm:PageViewModelBase">
-                <TextBlock Text="{Binding HeaderText}"/>
+                <TextBlock Text="{Binding HeaderText}" PointerPressed="TabPointerPressed" PointerReleased="TabPointerReleased"/>
             </DataTemplate>
         </TabControl.ItemTemplate>
     </TabControl>

@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MangaMan.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:ArchiveReaderViewModel"
+             Background="Transparent"
+             x:Class="MangaMan.Views.ArchiveReaderView">
+    <ScrollViewer Name="ScrollContainer">
+        <Image Source="{Binding CurrentImage^}"/>
+    </ScrollViewer>
+</UserControl>
