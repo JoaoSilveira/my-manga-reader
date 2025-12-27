@@ -8,6 +8,6 @@
              Background="Transparent"
              x:Class="MangaMan.Views.ArchiveReaderView">
     <ScrollViewer Name="ScrollContainer">
-        <Image Source="{Binding CurrentImage^}"/>
+        <Image Source="{Binding CurrentImage}" />
     </ScrollViewer>
 </UserControl>

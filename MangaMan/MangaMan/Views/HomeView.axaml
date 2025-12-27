@@ -18,7 +18,7 @@
             </StackPanel>
 
             <TreeView Name="SyncFolderList" Grid.Row="2" ItemsSource="{Binding SyncFolders}"
-                      SelectedItem="{Binding SelectedSyncFolder}">
+                      SelectedItem="{Binding SelectedSyncFolder, Mode=TwoWay}">
                 <TreeView.ItemTemplate>
                     <TreeDataTemplate DataType="vm:SyncFolderViewModel" ItemsSource="{Binding Children}">
                         <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}" />
@@ -26,6 +26,7 @@
                 </TreeView.ItemTemplate>
             </TreeView>
         </Grid>
+
         <GridSplitter Grid.Column="1" />
 
         <ListBox Grid.Column="2" Name="ArchiveListView"
@@ -44,7 +45,8 @@
 
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="vm:ArchiveViewModel">
-                    <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}" PointerPressed="ArchivePointerPressed"/>
+                    <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}"
+                               PointerPressed="ArchivePointerPressed" Background="Transparent" />
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

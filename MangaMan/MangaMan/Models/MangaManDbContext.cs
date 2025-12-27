@@ -6,6 +6,7 @@ public class MangaManDbContext : DbContext
 {
     public DbSet<SyncFolder> SyncFolders { get; set; }
     public DbSet<MangaArchive> MangaArchives { get; set; }
+    public DbSet<OpenTab> OpenTabs { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

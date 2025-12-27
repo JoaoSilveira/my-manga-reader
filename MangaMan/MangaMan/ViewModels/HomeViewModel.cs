@@ -142,9 +142,9 @@ public partial class ArchiveViewModel : ViewModelBase
     public required string Name { get; init; }
     public required string Path { get; init; }
 
-    [RelayCommand]
-    private void OpenArchive()
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task OpenArchive()
     {
-        MainWindowVM.OpenArchive(Path);
+        await MainWindowVM.OpenArchive(ArchiveId, Path);
     }
 }

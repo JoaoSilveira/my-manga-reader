@@ -13,7 +13,7 @@ namespace MangaMan.Service;
 public static class ArchiveService
 {
     private static readonly string[] ArchiveExtensions = [".zip", ".cbz"];
-    private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png"];
+    private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png",".webp"];
 
     public static IArchiveReader OpenArchive(string path)
     {

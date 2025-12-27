@@ -3,6 +3,7 @@ using System;
 using MangaMan.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MangaMan.Migrations
 {
     [DbContext(typeof(MangaManDbContext))]
-    partial class MangaManDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251227122328_PersistOpenTabs")]
+    partial class PersistOpenTabs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.1");

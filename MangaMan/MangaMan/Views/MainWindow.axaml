@@ -17,7 +17,8 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <TabControl ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab, Mode=TwoWay}">
+    <TabControl Name="TabContainer" AutoScrollToSelectedItem="True" ItemsSource="{Binding Tabs}"
+                SelectedItem="{Binding SelectedTab, Mode=TwoWay}">
         <TabControl.DataTemplates>
             <DataTemplate DataType="vm:HomeViewModel">
                 <v:HomeView DataContext="{Binding}" />
@@ -30,7 +31,9 @@
 
         <TabControl.ItemTemplate>
             <DataTemplate DataType="vm:PageViewModelBase">
-                <TextBlock Text="{Binding HeaderText}" PointerPressed="TabPointerPressed" PointerReleased="TabPointerReleased"/>
+                <TextBlock Text="{Binding HeaderText}" PointerPressed="TabPointerPressed"
+                           PointerReleased="TabPointerReleased" FontSize="14" TextTrimming="CharacterEllipsis"
+                           MaxWidth="250" />
             </DataTemplate>
         </TabControl.ItemTemplate>
     </TabControl>

@@ -18,19 +18,19 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public override void OnFrameworkInitializationCompleted()
+    public override async void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
-            using (var ctx = new MangaManDbContext())
-                ctx.Database.Migrate();
+            await using (var ctx = new MangaManDbContext())
+                await ctx.Database.MigrateAsync();
 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = MainWindowViewModel.Create(),
+                DataContext = await MainWindowViewModel.Create(),
             };
         }
 

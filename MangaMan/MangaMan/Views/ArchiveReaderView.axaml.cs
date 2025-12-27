@@ -1,7 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using MangaMan.ViewModels;
 
 namespace MangaMan.Views;
@@ -24,19 +26,21 @@ public partial class ArchiveReaderView : UserControl
         {
             case > .6:
                 if (vm.GoNextPageCommand.CanExecute(null))
-                {
-                    vm.GoNextPageCommand.Execute(null);
-                    ScrollContainer.ScrollToHome();
-                }
+                    vm.GoNextPageCommand.ExecuteAsync(null)
+                        .ContinueWith(_ => Dispatcher.UIThread.Post(ScrollContainer.ScrollToHome));
                 break;
 
             case < .3:
                 if (vm.GoPreviousPageCommand.CanExecute(null))
-                {
-                    vm.GoPreviousPageCommand.Execute(null);
-                    ScrollContainer.ScrollToHome();
-                }
+                    vm.GoPreviousPageCommand.ExecuteAsync(null)
+                        .ContinueWith(_ => Dispatcher.UIThread.Post(ScrollContainer.ScrollToHome));
                 break;
         }
+    }
+
+    protected override async void OnLoaded(RoutedEventArgs e)
+    {
+        base.OnLoaded(e);
+        await (DataContext as ArchiveReaderViewModel)!.EnsureInitializedAsync();
     }
 }

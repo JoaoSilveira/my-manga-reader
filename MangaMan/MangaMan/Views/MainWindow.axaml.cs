@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using MangaMan.ViewModels;
 
 namespace MangaMan.Views;
@@ -22,6 +23,6 @@ public partial class MainWindow : Window
             return;
 
         var vm = (DataContext as MainWindowViewModel)!;
-        vm.CloseTab((sender as Control).DataContext as ViewModelBase);
+        vm.CloseTab(((sender as Control)!.DataContext as ViewModelBase)!);
     }
 }
