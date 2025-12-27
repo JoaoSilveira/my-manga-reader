@@ -37,6 +37,7 @@ public partial class SyncFolderViewModel : ViewModelBase
                 ArchiveId = a.Id,
                 Name = a.Name,
                 Path = a.Path,
+                WasRead = a.WasRead,
             })
             .ToListAsync();
         IsWorking = false;

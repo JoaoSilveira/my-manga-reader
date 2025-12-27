@@ -31,11 +31,12 @@
         <GridSplitter Grid.Column="1" />
 
         <Grid RowDefinitions="Auto,*" RowSpacing="10" Grid.Column="2">
-            <StackPanel  HorizontalAlignment="Right">
+            <StackPanel HorizontalAlignment="Right">
                 <TextBox Name="FilterTextBox" Width="300" Text="{Binding FilterText}" />
             </StackPanel>
-            
-            <ListBox Grid.Row="1" Name="ArchiveListView" ItemsSource="{Binding SelectedFolderArchives,FallbackValue={x:Null}}">
+
+            <ListBox Grid.Row="1" Name="ArchiveListView"
+                     ItemsSource="{Binding SelectedFolderArchives,FallbackValue={x:Null}}">
                 <ListBox.KeyBindings>
                     <KeyBinding Gesture="Space"
                                 Command="{Binding #ArchiveListView.SelectedItem.(vm:ArchiveViewModel).OpenArchiveCommand}" />
@@ -50,8 +51,39 @@
 
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="vm:ArchiveViewModel">
-                        <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}"
-                                   PointerPressed="ArchivePointerPressed" Background="Transparent" />
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Grid.Styles>
+                                <Style Selector="i|Icon">
+                                    <Setter Property="Value" Value="fa-regular fa-square" />
+                                    <Setter Property="Foreground" Value="MintCream" />
+                                </Style>
+
+                                <Style Selector="i|Icon.Read">
+                                    <Setter Property="Value" Value="fa-solid fa-square-check" />
+                                    <Setter Property="Foreground" Value="MediumSeaGreen" />
+                                </Style>
+                                
+                                <Style Selector="MenuItem">
+                                    <Setter Property="Header" Value="Mark as read" />
+                                </Style>
+
+                                <Style Selector="MenuItem.Read">
+                                    <Setter Property="Header" Value="Mark as not read" />
+                                </Style>
+                            </Grid.Styles>
+                            
+                            <Grid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Classes.Read="{Binding WasRead}" Command="{Binding ToggleReadCommand}" />
+                                </ContextMenu>
+                            </Grid.ContextMenu>
+                            
+                            <i:Icon Classes.Read="{Binding WasRead}" FontSize="20" VerticalAlignment="Center" />
+
+                            <TextBlock Grid.Column="1" Text="{Binding Name}" ToolTip.Tip="{Binding Path}"
+                                       PointerPressed="ArchivePointerPressed" Background="Transparent"
+                                       VerticalAlignment="Center" />
+                        </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
