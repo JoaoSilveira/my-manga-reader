@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MangaMan.Models;
 using MangaMan.Service;
+using MangaMan.Views;
 using Microsoft.EntityFrameworkCore;
 
 namespace MangaMan.ViewModels;
@@ -55,17 +56,41 @@ public partial class ArchiveReaderViewModel : PageViewModelBase
         {
             if (_cache.ContainsKey(CurrentPagePath))
                 return;
-            
+
             var img = await LoadImageAsync(CurrentPagePath);
-            
+
             OnPropertyChanging(nameof(CurrentImage));
             _cache.Add(CurrentPagePath, img);
             OnPropertyChanged(nameof(CurrentImage));
             return;
         }
-        
+
         if (Reader.Images.Count > 0 && GoNextPageCommand.CanExecute(null))
             await GoNextPageCommand.ExecuteAsync(null);
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task EndOfArchiveReached()
+    {
+        var res = await MessageBox.Show(
+            null,
+            "Archive ended",
+            "Would you like to close the archive?",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+        if (res != true)
+            return;
+
+        await using (var ctx = new MangaManDbContext())
+        {
+            await ctx.MangaArchives
+                .Where(a => a.Id == ArchiveId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.WasRead, true));
+            await ctx.SaveChangesAsync();
+        }
+
+        await MainWindowVM.CloseTab(this);
     }
 
     [RelayCommand(CanExecute = nameof(CanGoNextPage), AllowConcurrentExecutions = false)]

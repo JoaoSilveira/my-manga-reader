@@ -15,7 +15,7 @@ public partial class ArchiveReaderView : UserControl
         InitializeComponent();
     }
 
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    protected override async void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
 
@@ -26,14 +26,23 @@ public partial class ArchiveReaderView : UserControl
         {
             case > .6:
                 if (vm.GoNextPageCommand.CanExecute(null))
-                    vm.GoNextPageCommand.ExecuteAsync(null)
-                        .ContinueWith(_ => Dispatcher.UIThread.Post(ScrollContainer.ScrollToHome));
+                {
+                    await vm.GoNextPageCommand.ExecuteAsync(null);
+                    ScrollContainer.ScrollToHome();
+                }
+                else if (vm.EndOfArchiveReachedCommand.CanExecute(null))
+                {
+                    await vm.EndOfArchiveReachedCommand.ExecuteAsync(null);
+                }
+
                 break;
 
             case < .3:
                 if (vm.GoPreviousPageCommand.CanExecute(null))
-                    vm.GoPreviousPageCommand.ExecuteAsync(null)
-                        .ContinueWith(_ => Dispatcher.UIThread.Post(ScrollContainer.ScrollToHome));
+                {
+                    await vm.GoPreviousPageCommand.ExecuteAsync(null);
+                    ScrollContainer.ScrollToHome();
+                }
                 break;
         }
     }

@@ -27,6 +27,13 @@ public partial class HomeViewModel : PageViewModelBase
 
     [ObservableProperty] private SyncFolderViewModel? _selectedSyncFolder;
 
+    public IEnumerable<ArchiveViewModel>? SelectedFolderArchives =>
+        SelectedSyncFolder?.Archives
+            ?.Where(a => a.Name.Contains(FilterText, StringComparison.CurrentCultureIgnoreCase));
+
+    [NotifyPropertyChangedFor(nameof(SelectedFolderArchives))] [ObservableProperty]
+    private string _filterText = string.Empty;
+
     public async Task Initialize()
     {
         IsWorking = true;
@@ -64,14 +71,22 @@ public partial class HomeViewModel : PageViewModelBase
         IsWorking = false;
     }
 
-    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    protected override async void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
         if (e.PropertyName != nameof(SelectedSyncFolder))
             return;
 
-        if (SelectedSyncFolder is { } vm && vm.LoadArchivesCommand.CanExecute(null))
-            vm.LoadArchivesCommand.Execute(null);
+        if (SelectedSyncFolder is not { } vm)
+            return;
+
+        if (vm.LoadArchivesCommand.CanExecute(null))
+            await vm.LoadArchivesCommand.ExecuteAsync(null);
+        
+        if (FilterText == string.Empty)
+            OnPropertyChanged(nameof(SelectedFolderArchives));
+        else
+            FilterText = string.Empty;
     }
 
     private async Task<List<SyncFolderViewModel>> ReadFoldersFromDbAsync() =>
@@ -98,53 +113,5 @@ public partial class HomeViewModel : PageViewModelBase
         }
 
         return folders;
-    }
-}
-
-public partial class SyncFolderViewModel : ViewModelBase
-{
-    public required Guid SyncFolderId { get; init; }
-    public required string Name { get; init; }
-    public required string Path { get; init; }
-
-    [NotifyCanExecuteChangedFor(nameof(LoadArchivesCommand))] [ObservableProperty]
-    private bool _isWorking = false;
-
-    public bool CanLoadArchives => !IsWorking && Archives is null;
-
-    public List<SyncFolderViewModel> Children { get; init; } = [];
-
-    [ObservableProperty] private List<ArchiveViewModel>? _archives = null;
-
-    [RelayCommand(CanExecute = nameof(CanLoadArchives))]
-    private async Task LoadArchives()
-    {
-        IsWorking = true;
-        await using var ctx = new MangaManDbContext();
-        Archives = await ctx.MangaArchives
-            .Where(a => a.SyncFolderId == SyncFolderId)
-            .ToAsyncEnumerable()
-            .Select(a => new ArchiveViewModel()
-            {
-                MainWindowVM = MainWindowVM,
-                ArchiveId = a.Id,
-                Name = a.Name,
-                Path = a.Path,
-            })
-            .ToListAsync();
-        IsWorking = false;
-    }
-}
-
-public partial class ArchiveViewModel : ViewModelBase
-{
-    public required Guid ArchiveId { get; init; }
-    public required string Name { get; init; }
-    public required string Path { get; init; }
-
-    [RelayCommand(AllowConcurrentExecutions = false)]
-    private async Task OpenArchive()
-    {
-        await MainWindowVM.OpenArchive(ArchiveId, Path);
     }
 }

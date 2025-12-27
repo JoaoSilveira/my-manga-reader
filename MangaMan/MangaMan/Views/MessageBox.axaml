@@ -1,0 +1,107 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="https://github.com/projektanker/icons.avalonia"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:v="clr-namespace:MangaMan.Views"
+        xmlns:u="clr-namespace:MangaMan.Views.Util"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="MangaMan.Views.MessageBox"
+        x:DataType="v:MessageBox"
+        DataContext="{Binding $self}"
+        MinHeight="250"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        CanMinimize="False"
+        CanMaximize="False"
+        CanResize="False">
+    <Window.Resources>
+        <u:EqualConverter x:Key="EqualConverter" />
+    </Window.Resources>
+    <Window.Styles>
+        <Style Selector="i|Icon.Information">
+            <Setter Property="Margin" Value="0,0,20,0" />
+            <Setter Property="Value" Value="fa-info-circle" />
+            <Setter Property="Foreground" Value="CornflowerBlue" />
+        </Style>
+
+        <Style Selector="i|Icon.Warning">
+            <Setter Property="Margin" Value="0,0,20,0" />
+            <Setter Property="Value" Value="fa-exclamation-triangle" />
+            <Setter Property="Foreground" Value="Gold" />
+        </Style>
+
+        <Style Selector="i|Icon.Error">
+            <Setter Property="Margin" Value="0,0,20,0" />
+            <Setter Property="Value" Value="fa-square-xmark" />
+            <Setter Property="Foreground" Value="Crimson" />
+        </Style>
+
+        <Style Selector="i|Icon.Stop">
+            <Setter Property="Margin" Value="0,0,20,0" />
+            <Setter Property="Value" Value="fa-ban" />
+            <Setter Property="Foreground" Value="Crimson" />
+        </Style>
+
+        <Style Selector="i|Icon.Question">
+            <Setter Property="Margin" Value="0,0,20,0" />
+            <Setter Property="Value" Value="fa-circle-question" />
+            <Setter Property="Foreground" Value="CornflowerBlue" />
+        </Style>
+
+        <Style Selector="i|Icon.Hidden">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+    </Window.Styles>
+    <Grid RowDefinitions="*, Auto" Margin="10">
+        <DockPanel Grid.Row="0" Margin="10">
+            <i:Icon
+                Classes.Hidden="{
+                    Binding IconType,
+                    Converter={StaticResource EqualConverter},
+                    ConverterParameter={x:Static v:MessageBoxIcon.None}}"
+                Classes.Error="{
+                    Binding IconType,
+                    Converter={StaticResource EqualConverter},
+                    ConverterParameter={x:Static v:MessageBoxIcon.Error}}"
+                Classes.Information="{
+                    Binding IconType,
+                    Converter={StaticResource EqualConverter},
+                    ConverterParameter={x:Static v:MessageBoxIcon.Information}}"
+                Classes.Question="{
+                    Binding IconType,
+                    Converter={StaticResource EqualConverter},
+                    ConverterParameter={x:Static v:MessageBoxIcon.Question}}"
+                Classes.Stop="{
+                    Binding IconType,
+                    Converter={StaticResource EqualConverter},
+                    ConverterParameter={x:Static v:MessageBoxIcon.Stop}}"
+                Classes.Warning="{
+                    Binding IconType,
+                    Converter={StaticResource EqualConverter},
+                    ConverterParameter={x:Static v:MessageBoxIcon.Warning}}"
+                FontSize="40"
+                DockPanel.Dock="Left"
+                VerticalAlignment="Top" />
+
+            <TextBlock Text="{Binding Message}"
+                       TextWrapping="Wrap"
+                       FontSize="14"
+                       MinWidth="150"
+                       MaxWidth="600" />
+        </DockPanel>
+
+        <UniformGrid Grid.Row="1" Rows="1" HorizontalAlignment="Right" Margin="0,15,0,0" ColumnSpacing="5">
+            <Button Content="{Binding PositiveText}" Click="DialogAction" Tag="{x:True}" />
+            <Button Content="No" IsVisible="{Binding NegativeVisible}"
+                    Click="DialogAction" Tag="{x:False}" />
+            <Button Content="Cancel" IsCancel="True" IsVisible="{Binding CancelVisible}" Click="DialogAction"
+                    Tag="{x:Null}" />
+        </UniformGrid>
+    </Grid>
+</Window>

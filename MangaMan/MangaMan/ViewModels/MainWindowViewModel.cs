@@ -84,6 +84,10 @@ public partial class MainWindowViewModel : ObservableObject
                 CurrentPage = reader.Images.ElementAt(0),
             });
 
+            await ctx.MangaArchives
+                .Where(t => t.Id == archiveId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.LastOpenedAt, DateTime.Now));
+
             await ctx.SaveChangesAsync();
         }
 

@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:MangaMan.ViewModels"
+             xmlns:v="clr-namespace:MangaMan.Views"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -29,26 +30,31 @@
 
         <GridSplitter Grid.Column="1" />
 
-        <ListBox Grid.Column="2" Name="ArchiveListView"
-                 ItemsSource="{Binding SelectedSyncFolder.Archives,FallbackValue={x:Null}}">
-            <ListBox.KeyBindings>
-                <KeyBinding Gesture="Space"
-                            Command="{Binding #ArchiveListView.SelectedItem.(vm:ArchiveViewModel).OpenArchiveCommand}" />
-                <KeyBinding Gesture="Enter"
-                            Command="{Binding #ArchiveListView.SelectedItem.(vm:ArchiveViewModel).OpenArchiveCommand}" />
-            </ListBox.KeyBindings>
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Vertical" />
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
+        <Grid RowDefinitions="Auto,*" RowSpacing="10" Grid.Column="2">
+            <StackPanel  HorizontalAlignment="Right">
+                <TextBox Name="FilterTextBox" Width="300" Text="{Binding FilterText}" />
+            </StackPanel>
+            
+            <ListBox Grid.Row="1" Name="ArchiveListView" ItemsSource="{Binding SelectedFolderArchives,FallbackValue={x:Null}}">
+                <ListBox.KeyBindings>
+                    <KeyBinding Gesture="Space"
+                                Command="{Binding #ArchiveListView.SelectedItem.(vm:ArchiveViewModel).OpenArchiveCommand}" />
+                    <KeyBinding Gesture="Enter"
+                                Command="{Binding #ArchiveListView.SelectedItem.(vm:ArchiveViewModel).OpenArchiveCommand}" />
+                </ListBox.KeyBindings>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
 
-            <ListBox.ItemTemplate>
-                <DataTemplate DataType="vm:ArchiveViewModel">
-                    <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}"
-                               PointerPressed="ArchivePointerPressed" Background="Transparent" />
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="vm:ArchiveViewModel">
+                        <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}"
+                                   PointerPressed="ArchivePointerPressed" Background="Transparent" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
     </Grid>
 </UserControl>
