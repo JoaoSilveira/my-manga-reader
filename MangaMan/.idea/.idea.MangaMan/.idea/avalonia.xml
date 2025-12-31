@@ -3,6 +3,7 @@
   <component name="AvaloniaProject">
     <option name="projectPerEditor">
       <map>
+        <entry key="MangaMan/Views/ArchiveEditorView.axaml" value="MangaMan/MangaMan.csproj" />
         <entry key="MangaMan/Views/ArchiveReaderView.axaml" value="MangaMan/MangaMan.csproj" />
         <entry key="MangaMan/Views/HomeView.axaml" value="MangaMan/MangaMan.csproj" />
         <entry key="MangaMan/Views/MainWindow.axaml" value="MangaMan/MangaMan.csproj" />

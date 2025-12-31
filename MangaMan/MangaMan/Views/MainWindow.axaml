@@ -27,6 +27,10 @@
             <DataTemplate DataType="vm:ArchiveReaderViewModel">
                 <v:ArchiveReaderView DataContext="{Binding}" />
             </DataTemplate>
+
+            <DataTemplate DataType="vm:ArchiveEditorViewModel">
+                <v:ArchiveEditorView DataContext="{Binding}" />
+            </DataTemplate>
         </TabControl.DataTemplates>
 
         <TabControl.ItemTemplate>

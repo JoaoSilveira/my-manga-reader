@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:MangaMan.ViewModels"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:ArchiveEditorViewModel"
+             Name="Uc"
+             x:Class="MangaMan.Views.ArchiveEditorView">
+    <Grid RowDefinitions="*,Auto" RowSpacing="10">
+        <ContentControl Content="{Binding SelectedPage}">
+
+            <ContentControl.DataTemplates>
+                <DataTemplate DataType="vm:ArchiveEditorPageViewModel">
+                    <Image Source="{Binding Thumbnail^}">
+                        <Image.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete"
+                                          Classes.Deleted="{Binding Deleted}"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with next"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithNextCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with previous"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithPreviousCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                            </ContextMenu>
+                        </Image.ContextMenu>
+                    </Image>
+                </DataTemplate>
+
+                <DataTemplate DataType="vm:ArchiveEditorDoublePageViewModel">
+                    <UniformGrid Columns="2">
+                        <UniformGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete"
+                                          Classes.Deleted="{Binding Deleted}"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Split into halves"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).SplitHalvesCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-shuffle" Header="Swap sides"
+                                          Command="{Binding SwapSidesCommand}" />
+                            </ContextMenu>
+                        </UniformGrid.ContextMenu>
+
+                        <Image HorizontalAlignment="Right" Source="{Binding Left.Thumbnail^}" />
+                        <Image HorizontalAlignment="Left" Source="{Binding Right.Thumbnail^}" />
+                    </UniformGrid>
+                </DataTemplate>
+            </ContentControl.DataTemplates>
+        </ContentControl>
+
+        <ListBox Grid.Row="1" ItemsSource="{Binding Pages}" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 ScrollViewer.VerticalScrollBarVisibility="Hidden" SelectedItem="{Binding SelectedPage, Mode=TwoWay}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+
+            <ListBox.Styles>
+                <Style Selector="Image.Deleted">
+                    <Setter Property="Opacity" Value="0.3" />
+                </Style>
+
+                <Style Selector="MenuItem.Deleted">
+                    <Setter Property="Header" Value="Undelete page" />
+                    <Setter Property="(i:MenuItem.Icon)" Value="fa-solid trash-arrow-up" />
+                </Style>
+
+                <Style Selector="ListBoxItem">
+                    <Setter Property="Padding" Value="0" />
+                </Style>
+            </ListBox.Styles>
+
+            <ListBox.DataTemplates>
+                <DataTemplate DataType="vm:ArchiveEditorPageViewModel">
+                    <Border
+                        Background="Transparent" MaxWidth="300" MaxHeight="330"
+                        Width="300" Height="330" MinWidth="300" MinHeight="330" Padding="12 9 12 12">
+                        <Border.ContextMenu>
+                            <ContextMenu x:DataType="vm:ArchiveEditorPageViewModel">
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete"
+                                          Classes.Deleted="{Binding Deleted}"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with next"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithNextCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with previous"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithPreviousCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                            </ContextMenu>
+                        </Border.ContextMenu>
+
+                        <Grid RowDefinitions="*,Auto" RowSpacing="5">
+                            <Image Classes.Deleted="{Binding Deleted}" Source="{Binding Thumbnail^}" />
+
+                            <i:Icon Grid.Row="0" ZIndex="1" Value="fa-solid fa-trash-can" Foreground="Crimson"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="40" Margin="10"
+                                    IsVisible="{Binding Deleted}" />
+
+                            <TextBlock Grid.Row="1" Text="{Binding NewPath}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+
+                <DataTemplate DataType="vm:ArchiveEditorDoublePageViewModel">
+                    <Border
+                        Background="Transparent" MaxWidth="300" MaxHeight="330"
+                        Width="300" Height="330" MinWidth="300" MinHeight="330" Padding="12 9 12 12">
+                        <Border.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete"
+                                          Classes.Deleted="{Binding Deleted}"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Split into halves"
+                                          Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).SplitHalvesCommand,FallbackValue={x:Null}}"
+                                          CommandParameter="{Binding .}" />
+                                <MenuItem i:MenuItem.Icon="fa-solid fa-shuffle" Header="Swap sides"
+                                          Command="{Binding SwapSidesCommand}" />
+                            </ContextMenu>
+                        </Border.ContextMenu>
+                        <Grid RowDefinitions="*,Auto" RowSpacing="5">
+                            <UniformGrid Columns="2">
+                                <Image Classes.Deleted="{Binding Deleted}" HorizontalAlignment="Right"
+                                       Source="{Binding Left.Thumbnail^}" />
+                                <Image Classes.Deleted="{Binding Deleted}" HorizontalAlignment="Left"
+                                       Source="{Binding Right.Thumbnail^}" />
+                            </UniformGrid>
+
+                            <i:Icon Grid.Row="0" ZIndex="1" Value="fa-solid fa-trash-can" Foreground="Crimson"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="40" Margin="10"
+                                    IsVisible="{Binding Deleted}" />
+
+                            <TextBlock Grid.Row="1" Text="{Binding NewPath}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.DataTemplates>
+        </ListBox>
+    </Grid>
+</UserControl>

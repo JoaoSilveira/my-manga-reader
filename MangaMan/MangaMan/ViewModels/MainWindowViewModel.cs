@@ -95,16 +95,47 @@ public partial class MainWindowViewModel : ObservableObject
         SelectedTab = archiveVm;
     }
 
+    public async Task EditArchive(Guid archiveId)
+    {
+        var openTab = Tabs
+            .FirstOrDefault(t => t is ArchiveEditorViewModel vm && vm.ArchiveId == archiveId);
+        if (openTab is not null)
+        {
+            SelectedTab = openTab;
+            return;
+        }
+
+        await using var ctx = new MangaManDbContext();
+        var archive = await ctx.MangaArchives
+            .FirstAsync(t => t.Id == archiveId);
+            
+        var reader = ArchiveService.OpenArchive(archive.Path);
+        var vm = new ArchiveEditorViewModel(archiveId, reader)
+        {
+            MainWindowVM = this,
+        };
+
+        Tabs.Add(vm);
+        SelectedTab = vm;
+    }
+
     public async Task CloseTab(ViewModelBase dataContext)
     {
-        if (dataContext is ArchiveReaderViewModel reader)
+        switch (dataContext)
         {
-            await using var ctx = new MangaManDbContext();
-            await ctx.OpenTabs.Where(tab => tab.MangaArchiveId == reader.ArchiveId)
-                .ExecuteDeleteAsync();
+            case ArchiveEditorViewModel:
+                Tabs.Remove(dataContext);
+                return;
+            case ArchiveReaderViewModel reader:
+            {
+                await using var ctx = new MangaManDbContext();
+                await ctx.OpenTabs.Where(tab => tab.MangaArchiveId == reader.ArchiveId)
+                    .ExecuteDeleteAsync();
 
-            await ctx.SaveChangesAsync();
-            Tabs.Remove(dataContext);
+                await ctx.SaveChangesAsync();
+                Tabs.Remove(dataContext);
+                break;
+            }
         }
     }
 }

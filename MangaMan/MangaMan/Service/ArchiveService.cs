@@ -87,11 +87,14 @@ public class ZipArchiveReader : IArchiveReader, IDisposable, IAsyncDisposable
         if (entry is null)
             return null;
 
+        // zip does not handle async very well
         var bytes = new byte[entry.Length];
-        await using var stream = await entry.OpenAsync(cancellationToken);
-        await stream.ReadExactlyAsync(bytes, 0, bytes.Length, cancellationToken);
+        // ReSharper disable once MethodHasAsyncOverloadWithCancellation
+        await using var stream = entry.Open();
+        // ReSharper disable once MethodHasAsyncOverloadWithCancellation
+        stream.ReadExactly(bytes, 0, bytes.Length);
 
-        return bytes;
+        return await Task.FromResult(bytes);
     }
 }
 

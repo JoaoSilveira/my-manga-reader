@@ -32,4 +32,10 @@ public partial class ArchiveViewModel : ViewModelBase
         await ctx.SaveChangesAsync();
         WasRead = !WasRead;
     }
+    
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task EditArchive()
+    {
+        await MainWindowVM.EditArchive(ArchiveId);
+    }
 }
