@@ -13,7 +13,7 @@ namespace MangaMan.Service;
 public static class ArchiveService
 {
     private static readonly string[] ArchiveExtensions = [".zip", ".cbz"];
-    private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png",".webp"];
+    private static readonly string[] ImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
 
     public static IArchiveReader OpenArchive(string path)
     {
@@ -34,11 +34,35 @@ public static class ArchiveService
         ImageExtensions.Contains(file.Extension.ToLowerInvariant());
 }
 
+public class ArchiveFolder
+{
+    public required string Name { get; init; }
+    public HashSet<ArchiveFile> Files { get; set; } = [];
+    public HashSet<ArchiveFolder> Folders { get; set; } = [];
+
+    public override bool Equals(object? obj)
+    {
+        return Name.Equals((obj as ArchiveFolder)?.Name);
+    }
+
+    public override int GetHashCode()
+    {
+        return Name.GetHashCode();
+    }
+}
+
+public record ArchiveFile(string Name, string Path)
+{
+    public bool IsImage { get; } = ArchiveService.IsImageFile(Name);
+}
+
 public interface IArchiveReader
 {
     public IReadOnlyCollection<string> Images { get; }
 
     public Task<byte[]?> ReadAllBytesAsync(string path, CancellationToken cancellationToken = default);
+
+    public ArchiveFolder ReadFolderTree();
 }
 
 public class ZipArchiveReader : IArchiveReader, IDisposable, IAsyncDisposable
@@ -96,6 +120,36 @@ public class ZipArchiveReader : IArchiveReader, IDisposable, IAsyncDisposable
 
         return await Task.FromResult(bytes);
     }
+
+    public ArchiveFolder ReadFolderTree()
+    {
+        var root = new ArchiveFolder() { Name = "" };
+        foreach (var entry in _archive.Entries)
+        {
+            var folder = root;
+            foreach (var part in entry.FullName.SplitAny(['/', '\\']))
+            {
+                // last part is a folder (entry ending with '/')
+                if (part.Start.Value == part.End.Value)
+                    continue;
+
+                // last part and does not ends with '/' (is not a folder)
+                if (part.End.Value == entry.FullName.Length)
+                {
+                    folder.Files.Add(new ArchiveFile(entry.FullName[part], entry.FullName));
+                    continue;
+                }
+
+                folder = folder.Folders.FirstOrDefault(f => f.Name == entry.FullName[part])
+                         ?? new ArchiveFolder() { Name = entry.FullName[part] };
+            }
+        }
+
+        root.Files = root.Files.OrderBy(f => f.Name).ToHashSet();
+        root.Files = root.Files.OrderBy(f => f.Name).ToHashSet();
+
+        return root;
+    }
 }
 
 public class FolderArchiveReader : IArchiveReader
@@ -114,7 +168,7 @@ public class FolderArchiveReader : IArchiveReader
         var folder = new DirectoryInfo(path);
         var images = folder.EnumerateFiles()
             .Where(ArchiveService.IsImageFile)
-            .Select(f => f.FullName)
+            .Select(f => f.Name)
             .Order()
             .ToList();
 
@@ -128,12 +182,30 @@ public class FolderArchiveReader : IArchiveReader
         if (!_images.Contains(path))
             return null;
 
-        var fileInfo = new FileInfo(path);
+        var fileInfo = new FileInfo(Path.Combine(_folder.FullName, path));
         var bytes = new byte[fileInfo.Length];
 
         await using var stream = fileInfo.OpenRead();
         await stream.ReadExactlyAsync(bytes, 0, bytes.Length, cancellationToken);
 
         return bytes;
+    }
+
+    public ArchiveFolder ReadFolderTree() => ReadFolderTree(_folder);
+
+    private ArchiveFolder ReadFolderTree(DirectoryInfo folder)
+    {
+        return new ArchiveFolder()
+        {
+            Name = folder.Name,
+            Files = folder.EnumerateFiles()
+                .Select(f => new ArchiveFile(f.Name, f.FullName[(_folder.FullName.Length + 1)..]))
+                .OrderBy(f => f.Name)
+                .ToHashSet(),
+            Folders = folder.EnumerateDirectories()
+                .Select(ReadFolderTree)
+                .OrderBy(f => f.Name)
+                .ToHashSet(),
+        };
     }
 }

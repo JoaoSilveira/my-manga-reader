@@ -1,25 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Media.Imaging;
+using Avalonia.Metadata;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MangaMan.Service;
-using Tmds.DBus.Protocol;
 
 namespace MangaMan.ViewModels;
 
-public partial class ArchiveEditorPageViewModel(IArchiveReader reader) : ViewModelBase
+public partial class AeArchiveFileViewModel(AeArchiveFolderViewModel Folder, ArchiveFile file, IArchiveReader reader)
+    : ViewModelBase
 {
-    public required string OriginalPath { get; init; }
-    [ObservableProperty] private string _newPath;
-
+    public string OriginalName { get; } = file.Name;
+    public string Path { get; } = file.Path;
+    [ObservableProperty] private string _name = file.Name;
     [ObservableProperty] private bool _deleted;
+    public bool IsImage { get; } = file.IsImage;
 
     public Task<Bitmap?> Thumbnail
     {
@@ -32,17 +38,16 @@ public partial class ArchiveEditorPageViewModel(IArchiveReader reader) : ViewMod
 
     private async Task<Bitmap?> GetImageAsync()
     {
-        var bytes = await reader.ReadAllBytesAsync(OriginalPath);
+        var bytes = await reader.ReadAllBytesAsync(Path);
         return bytes is null ? null : Bitmap.DecodeToHeight(new MemoryStream(bytes), 400);
     }
 }
 
-public partial class ArchiveEditorDoublePageViewModel : ViewModelBase
+public partial class AeArchiveJoinedFileViewModel(AeArchiveFolderViewModel Folder, string name) : ViewModelBase
 {
-    [ObservableProperty] private ArchiveEditorPageViewModel _left;
-    [ObservableProperty] private ArchiveEditorPageViewModel _right;
-
-    [ObservableProperty] private string _newPath;
+    [ObservableProperty] private string _name = name;
+    [ObservableProperty] private AeArchiveFileViewModel _left;
+    [ObservableProperty] private AeArchiveFileViewModel _right;
     [ObservableProperty] private bool _deleted;
 
     [RelayCommand]
@@ -52,137 +57,135 @@ public partial class ArchiveEditorDoublePageViewModel : ViewModelBase
     }
 }
 
+public partial class AeArchiveFolderViewModel : ViewModelBase
+{
+    public string OriginalName { get; }
+    [ObservableProperty] private string _name;
+
+    [ObservableProperty] private ObservableCollection<ViewModelBase> _entries;
+
+    public AeArchiveFolderViewModel(ArchiveFolder folder, IArchiveReader reader)
+    {
+        OriginalName = folder.Name;
+        _name = folder.Name;
+        _entries = new ObservableCollection<ViewModelBase>(
+            folder.Folders.Select<ArchiveFolder, ViewModelBase>(f => new AeArchiveFolderViewModel(f, reader))
+                .Concat(folder.Files.Select(f => new AeArchiveFileViewModel(this, f, reader)))
+        );
+    }
+
+    public IEnumerable<ViewModelBase> EnumerateImages()
+    {
+        foreach (var entry in Entries)
+        {
+            switch (entry)
+            {
+                case AeArchiveFolderViewModel child:
+                {
+                    foreach (var item in child.EnumerateImages())
+                        yield return item;
+                    break;
+                }
+                case AeArchiveFileViewModel { IsImage: false }:
+                    continue;
+            }
+
+            yield return entry;
+        }
+    }
+
+    [RelayCommand]
+    private void RenameAndOrderNumerically()
+    {
+        var newEntries = new ObservableCollection<ViewModelBase>(
+            Entries
+                .Order(Comparer<ViewModelBase>.Create((a, b) =>
+                    (a, b) switch
+                    {
+                        (AeArchiveFolderViewModel, AeArchiveFileViewModel) => -1,
+                        (AeArchiveFolderViewModel, AeArchiveJoinedFileViewModel) => -1,
+                        (AeArchiveFileViewModel, AeArchiveFolderViewModel) => 1,
+                        (AeArchiveJoinedFileViewModel, AeArchiveFolderViewModel) => 1,
+                        (AeArchiveFolderViewModel va, AeArchiveFolderViewModel vb) => string.CompareOrdinal(va.Name,
+                            vb.Name),
+                        (AeArchiveFileViewModel va, AeArchiveFileViewModel vb) => CompareFileNameNumerically(va.Name,
+                            vb.Name),
+                        (AeArchiveJoinedFileViewModel va, AeArchiveFileViewModel vb) => CompareFileNameNumerically(
+                            va.Name,
+                            vb.Name),
+                        (AeArchiveFileViewModel va, AeArchiveJoinedFileViewModel vb) => CompareFileNameNumerically(
+                            va.Name,
+                            vb.Name),
+                        (AeArchiveJoinedFileViewModel va, AeArchiveJoinedFileViewModel vb) =>
+                            CompareFileNameNumerically(va.Name,
+                                vb.Name),
+                        _ => throw new NotSupportedException(),
+                    }
+                ))
+        );
+
+        var i = 0;
+        var padding = (int)Math.Ceiling(Math.Log10(Entries.Count(f => f switch
+        {
+            AeArchiveFileViewModel a => ArchiveService.IsImageFile(a.Name),
+            AeArchiveJoinedFileViewModel a => ArchiveService.IsImageFile(a.Name),
+            _ => false,
+        })));
+        foreach (var entry in newEntries)
+        {
+            switch (entry)
+            {
+                case AeArchiveFileViewModel f when ArchiveService.IsImageFile(f.Name):
+                    f.Name = i.ToString().PadLeft(padding, '0') + Path.GetExtension(f.OriginalName);
+                    i++;
+                    break;
+                case AeArchiveJoinedFileViewModel fl when ArchiveService.IsImageFile(fl.Name):
+                    fl.Name = i.ToString().PadLeft(padding, '0') + Path.GetExtension(fl.Name);
+                    i++;
+                    break;
+            }
+        }
+
+        Entries = newEntries;
+    }
+
+    private static int CompareFileNameNumerically(string a, string b)
+    {
+        a = Path.GetFileNameWithoutExtension(a);
+        b = Path.GetFileNameWithoutExtension(b);
+        if (!int.TryParse(a, out var left))
+            return int.TryParse(b, out _) ? -1 : string.CompareOrdinal(a, b);
+
+        if (!int.TryParse(b, out var right))
+            return 1;
+
+        return left - right;
+    }
+}
+
 public partial class ArchiveEditorViewModel : PageViewModelBase
 {
     public Guid ArchiveId { get; }
     private readonly IArchiveReader _reader;
     public override string HeaderText { get; } = "Archive Editor";
 
-    [NotifyCanExecuteChangedFor(nameof(JoinWithNextCommand))]
-    [NotifyCanExecuteChangedFor(nameof(JoinWithPreviousCommand))]
-    [ObservableProperty]
-    private ObservableCollection<ViewModelBase> _pages;
+    [ObservableProperty] private ObservableCollection<AeArchiveFolderViewModel> _rootFolder;
 
-    [NotifyCanExecuteChangedFor(nameof(JoinWithNextCommand))]
-    [NotifyCanExecuteChangedFor(nameof(JoinWithPreviousCommand))]
-    [ObservableProperty]
-    private ViewModelBase? _selectedPage;
+    public IEnumerable<ViewModelBase> Images => RootFolder[0].EnumerateImages();
 
-    public bool CanJoinWithNext
-    {
-        get
-        {
-            return SelectedPage switch
-            {
-                ArchiveEditorPageViewModel vm => !vm.Deleted && NextUndeleted(vm) is not null,
-                _ => false
-            };
-        }
-    }
-
-    public bool CanJoinWithPrevious
-    {
-        get
-        {
-            return SelectedPage switch
-            {
-                ArchiveEditorPageViewModel vm => !vm.Deleted && PreviousUndeleted(vm) is not null,
-                _ => false
-            };
-        }
-    }
-
-    public bool CanSplitHalves => SelectedPage is ArchiveEditorDoublePageViewModel { Deleted: false };
+    [ObservableProperty] private ViewModelBase? _selectedImage;
 
     public ArchiveEditorViewModel(Guid archiveId, IArchiveReader reader)
     {
         ArchiveId = archiveId;
-        _pages = new ObservableCollection<ViewModelBase>(
-            reader.Images
-                .Select(i => new ArchiveEditorPageViewModel(reader) { OriginalPath = i, NewPath = i })
-        );
+        _reader = reader;
+        _rootFolder = [new AeArchiveFolderViewModel(_reader.ReadFolderTree(), reader)];
+        RootFolder[0].PropertyChanged += OnRootFolderPropertyChanged;
     }
 
-    [RelayCommand]
-    private static void ToggleDeletePage(ViewModelBase page)
+    private void OnRootFolderPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        switch (page)
-        {
-            case ArchiveEditorPageViewModel vm:
-                vm.Deleted = !vm.Deleted;
-                break;
-            case ArchiveEditorDoublePageViewModel vm:
-                vm.Deleted = !vm.Deleted;
-                break;
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanJoinWithNext))]
-    private void JoinWithNext(ArchiveEditorPageViewModel page)
-    {
-        var next = NextUndeleted(page)!;
-
-        var doublePage = new ArchiveEditorDoublePageViewModel()
-        {
-            Deleted = false,
-            Left = page,
-            Right = next,
-        };
-
-        Pages.Remove(next);
-        Pages.Insert(Pages.IndexOf(page), doublePage);
-        Pages.Remove(page);
-        SelectedPage = doublePage;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanJoinWithPrevious))]
-    private void JoinWithPrevious(ArchiveEditorPageViewModel page)
-    {
-        var previous = PreviousUndeleted(page)!;
-
-        var doublePage = new ArchiveEditorDoublePageViewModel()
-        {
-            Deleted = false,
-            Left = previous,
-            Right = page,
-        };
-
-        Pages.Remove(previous);
-        Pages.Insert(Pages.IndexOf(page), doublePage);
-        Pages.Remove(page);
-        SelectedPage = doublePage;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanSplitHalves))]
-    private void SplitHalves(ArchiveEditorDoublePageViewModel page)
-    {
-        page.Left.Deleted = page.Deleted;
-        page.Right.Deleted = page.Deleted;
-
-        Pages.Insert(Pages.IndexOf(page), page.Left);
-        Pages.Insert(Pages.IndexOf(page), page.Right);
-        Pages.Remove(page);
-        SelectedPage = page.Left;
-    }
-
-    private ArchiveEditorPageViewModel? NextUndeleted(ArchiveEditorPageViewModel? page = null)
-    {
-        if (page is null)
-            return null;
-
-        var selectedIndex = Pages.IndexOf(page);
-        return Pages
-            .Skip(selectedIndex + 1)
-            .FirstOrDefault(vm => vm is ArchiveEditorPageViewModel { Deleted: false }) as ArchiveEditorPageViewModel;
-    }
-
-    private ArchiveEditorPageViewModel? PreviousUndeleted(ArchiveEditorPageViewModel? page = null)
-    {
-        if (page is null)
-            return null;
-
-        return Pages
-            .TakeWhile(vm => !ReferenceEquals(vm, page))
-            .LastOrDefault(vm => vm is ArchiveEditorPageViewModel { Deleted: false }) as ArchiveEditorPageViewModel;
+        if (e.PropertyName == nameof(AeArchiveFolderViewModel.Entries))
+            OnPropertyChanged(nameof(Images));
     }
 }
