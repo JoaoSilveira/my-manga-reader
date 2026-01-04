@@ -8,191 +8,222 @@
              x:DataType="vm:ArchiveEditorViewModel"
              Name="Uc"
              x:Class="MangaMan.Views.ArchiveEditorView">
-    <Grid RowDefinitions="*,Auto" ColumnDefinitions="300,5,*" RowSpacing="10">
-        <TreeView ItemsSource="{Binding RootFolder}">
-            <TreeView.Styles>
-                <Style Selector="TreeViewItem">
-                    <Setter Property="Background" Value="Transparent" />
-                </Style>
+    <DockPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
+            <Button Content="Save" Command="{Binding SaveChangesCommand}" />
+        </StackPanel>
 
-                <Style Selector="TreeViewItem">
-                    <Setter Property="ContextMenu">
-                        <ContextMenu x:DataType="vm:AeArchiveFolderViewModel">
-                            <MenuItem Header="Rename and order numerically"
-                                      Command="{Binding RenameAndOrderNumericallyCommand}" />
-                        </ContextMenu>
-                    </Setter>
-
-                    <Style Selector="^[ItemCount=0]">
-                        <Setter Property="ContextMenu" Value="{x:Null}" />
+        <Grid RowDefinitions="*,Auto" ColumnDefinitions="300,5,*" RowSpacing="10">
+            <TreeView ItemsSource="{Binding RootFolder}" SelectionMode="Multiple"
+                      SelectedItems="{Binding SelectedEntries,Mode=TwoWay}">
+                <TreeView.Styles>
+                    <Style Selector="TreeViewItem">
+                        <Setter Property="Background" Value="Transparent" />
                     </Style>
-                </Style>
-            </TreeView.Styles>
 
-            <TreeView.DataTemplates>
-                <TreeDataTemplate DataType="vm:AeArchiveFolderViewModel" ItemsSource="{Binding Entries}">
-                    <StackPanel Orientation="Horizontal" Spacing="5">
-                        <i:Icon Value="fa-solid fa-folder" VerticalAlignment="Center" />
+                    <Style Selector="TreeViewItem">
+                        <Setter Property="ContextMenu">
+                            <ContextMenu x:DataType="vm:AeArchiveFolderViewModel">
+                                <MenuItem Header="Rename and order numerically"
+                                          Command="{Binding RenameAndOrderNumericallyCommand}" />
+                            </ContextMenu>
+                        </Setter>
 
-                        <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding OriginalName}" />
-                    </StackPanel>
-                </TreeDataTemplate>
+                        <Style Selector="^[ItemCount=0]">
+                            <Setter Property="ContextMenu">
+                                <ContextMenu>
+                                    <MenuItem Header="Join pages"
+                                              Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinSelectedItemsCommand,FallbackValue={x:Null}}" />
+                                </ContextMenu>
+                            </Setter>
+                        </Style>
+                    </Style>
+                </TreeView.Styles>
 
-                <DataTemplate DataType="vm:AeArchiveFileViewModel">
-                    <StackPanel Orientation="Horizontal" Spacing="5">
-                        <StackPanel.Styles>
-                            <Style Selector="i|Icon">
-                                <Setter Property="Value" Value="fa-solid fa-file" />
-                            </Style>
-                            <Style Selector="i|Icon.image">
-                                <Setter Property="Value" Value="fa-solid fa-file-image" />
-                            </Style>
-                        </StackPanel.Styles>
+                <TreeView.DataTemplates>
+                    <TreeDataTemplate DataType="vm:AeArchiveFolderViewModel" ItemsSource="{Binding Entries}">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <i:Icon Value="fa-solid fa-folder" VerticalAlignment="Center" />
 
-                        <i:Icon Classes.image="{Binding IsImage}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding OriginalName}" />
+                        </StackPanel>
+                    </TreeDataTemplate>
 
-                        <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding OriginalName}" />
-                    </StackPanel>
-                </DataTemplate>
-            </TreeView.DataTemplates>
-        </TreeView>
+                    <DataTemplate DataType="vm:AeArchiveFileViewModel">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <StackPanel.Styles>
+                                <Style Selector="i|Icon">
+                                    <Setter Property="Value" Value="fa-solid fa-file" />
+                                </Style>
+                                <Style Selector="i|Icon.image">
+                                    <Setter Property="Value" Value="fa-solid fa-file-image" />
+                                </Style>
+                            </StackPanel.Styles>
 
-        <GridSplitter Grid.Row="0" Grid.Column="1" ResizeDirection="Columns" />
+                            <i:Icon Classes.image="{Binding IsImage}" VerticalAlignment="Center" />
 
-        <ContentControl Grid.Row="0" Grid.Column="2" Content="{Binding SelectedImage}">
-            <ContentControl.DataTemplates>
-                <DataTemplate DataType="vm:AeArchiveFileViewModel">
-                    <Image Source="{Binding Thumbnail^}">
-                        <!-- <Image.ContextMenu> -->
-                        <!--     <ContextMenu> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete" -->
-                        <!--                   Classes.Deleted="{Binding Deleted}" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with next" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithNextCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with previous" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithPreviousCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--     </ContextMenu> -->
-                        <!-- </Image.ContextMenu> -->
-                    </Image>
-                </DataTemplate>
+                            <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding OriginalName}" />
+                        </StackPanel>
+                    </DataTemplate>
 
-                <DataTemplate DataType="vm:AeArchiveJoinedFileViewModel">
-                    <UniformGrid Columns="2">
-                        <!-- <UniformGrid.ContextMenu> -->
-                        <!--     <ContextMenu> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete" -->
-                        <!--                   Classes.Deleted="{Binding Deleted}" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Split into halves" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).SplitHalvesCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-shuffle" Header="Swap sides" -->
-                        <!--                   Command="{Binding SwapSidesCommand}" /> -->
-                        <!--     </ContextMenu> -->
-                        <!-- </UniformGrid.ContextMenu> -->
+                    <DataTemplate DataType="vm:AeArchiveJoinedFileViewModel">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <StackPanel.Styles>
+                                <Style Selector="i|Icon">
+                                    <Setter Property="Value" Value="fa-solid fa-file" />
+                                </Style>
+                                <Style Selector="i|Icon.image">
+                                    <Setter Property="Value" Value="fa-solid fa-file-image" />
+                                </Style>
+                            </StackPanel.Styles>
 
-                        <Image HorizontalAlignment="Right" Source="{Binding Left.Thumbnail^}" />
-                        <Image HorizontalAlignment="Left" Source="{Binding Right.Thumbnail^}" />
-                    </UniformGrid>
-                </DataTemplate>
-            </ContentControl.DataTemplates>
-        </ContentControl>
+                            <i:Icon Classes="image" VerticalAlignment="Center" />
 
-        <ListBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" ItemsSource="{Binding Images}"
-                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                 ScrollViewer.VerticalScrollBarVisibility="Hidden" SelectedItem="{Binding SelectedImage, Mode=TwoWay}">
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
+                            <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Name}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </TreeView.DataTemplates>
+            </TreeView>
 
-            <ListBox.Styles>
-                <Style Selector="Image.Deleted">
-                    <Setter Property="Opacity" Value="0.3" />
-                </Style>
+            <GridSplitter Grid.Row="0" Grid.Column="1" ResizeDirection="Columns" />
 
-                <Style Selector="MenuItem.Deleted">
-                    <Setter Property="Header" Value="Undelete page" />
-                    <Setter Property="(i:MenuItem.Icon)" Value="fa-solid trash-arrow-up" />
-                </Style>
+            <ContentControl Grid.Row="0" Grid.Column="2">
+                <ContentControl.DataTemplates>
+                    <DataTemplate DataType="vm:AeArchiveFileViewModel">
+                        <Image Source="{Binding Thumbnail^}">
+                            <!-- <Image.ContextMenu> -->
+                            <!--     <ContextMenu> -->
+                            <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete" -->
+                            <!--                   Classes.Deleted="{Binding Deleted}" -->
+                            <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}" -->
+                            <!--                   CommandParameter="{Binding .}" /> -->
+                            <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with next" -->
+                            <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithNextCommand,FallbackValue={x:Null}}" -->
+                            <!--                   CommandParameter="{Binding .}" /> -->
+                            <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with previous" -->
+                            <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithPreviousCommand,FallbackValue={x:Null}}" -->
+                            <!--                   CommandParameter="{Binding .}" /> -->
+                            <!--     </ContextMenu> -->
+                            <!-- </Image.ContextMenu> -->
+                        </Image>
+                    </DataTemplate>
 
-                <Style Selector="ListBoxItem">
-                    <Setter Property="Padding" Value="0" />
-                </Style>
-            </ListBox.Styles>
+                    <DataTemplate DataType="vm:AeArchiveJoinedFileViewModel">
+                        <UniformGrid Columns="2">
+                            <!-- <UniformGrid.ContextMenu> -->
+                            <!--     <ContextMenu> -->
+                            <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete" -->
+                            <!--                   Classes.Deleted="{Binding Deleted}" -->
+                            <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}" -->
+                            <!--                   CommandParameter="{Binding .}" /> -->
+                            <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Split into halves" -->
+                            <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).SplitHalvesCommand,FallbackValue={x:Null}}" -->
+                            <!--                   CommandParameter="{Binding .}" /> -->
+                            <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-shuffle" Header="Swap sides" -->
+                            <!--                   Command="{Binding SwapSidesCommand}" /> -->
+                            <!--     </ContextMenu> -->
+                            <!-- </UniformGrid.ContextMenu> -->
 
-            <ListBox.DataTemplates>
-                <DataTemplate DataType="vm:AeArchiveFileViewModel">
-                    <Border
-                        Background="Transparent" MaxWidth="300" MaxHeight="330"
-                        Width="300" Height="330" MinWidth="300" MinHeight="330" Padding="12 9 12 12">
-                        <!-- <Border.ContextMenu> -->
-                        <!--     <ContextMenu x:DataType="vm:ArchiveEditorPageViewModel"> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete" -->
-                        <!--                   Classes.Deleted="{Binding Deleted}" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with next" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithNextCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with previous" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).JoinWithPreviousCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--     </ContextMenu> -->
-                        <!-- </Border.ContextMenu> -->
+                            <Image HorizontalAlignment="Right" Source="{Binding Left.Thumbnail^}" />
+                            <Image HorizontalAlignment="Left" Source="{Binding Right.Thumbnail^}" />
+                        </UniformGrid>
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
 
-                        <Grid RowDefinitions="*,Auto" RowSpacing="5">
-                            <Image Classes.Deleted="{Binding Deleted}" Source="{Binding Thumbnail^}" />
+            <ListBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" ItemsSource="{Binding Images}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                     SelectedItems="{Binding SelectedEntries, Mode=TwoWay}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
 
-                            <i:Icon Grid.Row="0" ZIndex="1" Value="fa-solid fa-trash-can" Foreground="Crimson"
-                                    HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="40" Margin="10"
-                                    IsVisible="{Binding Deleted}" />
+                <ListBox.Styles>
+                    <Style Selector="Image.Deleted">
+                        <Setter Property="Opacity" Value="0.3" />
+                    </Style>
 
-                            <TextBlock Grid.Row="1" Text="{Binding Name}" ToolTip.Tip="{Binding OriginalName}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
+                    <Style Selector="MenuItem.Deleted">
+                        <Setter Property="Header" Value="Undelete page" />
+                        <Setter Property="(i:MenuItem.Icon)" Value="fa-solid trash-arrow-up" />
+                    </Style>
 
-                <DataTemplate DataType="vm:AeArchiveJoinedFileViewModel">
-                    <Border
-                        Background="Transparent" MaxWidth="300" MaxHeight="330"
-                        Width="300" Height="330" MinWidth="300" MinHeight="330" Padding="12 9 12 12">
-                        <!-- <Border.ContextMenu> -->
-                        <!--     <ContextMenu> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete" -->
-                        <!--                   Classes.Deleted="{Binding Deleted}" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).ToggleDeletePageCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Split into halves" -->
-                        <!--                   Command="{Binding #Uc.((vm:ArchiveEditorViewModel)DataContext).SplitHalvesCommand,FallbackValue={x:Null}}" -->
-                        <!--                   CommandParameter="{Binding .}" /> -->
-                        <!--         <MenuItem i:MenuItem.Icon="fa-solid fa-shuffle" Header="Swap sides" -->
-                        <!--                   Command="{Binding SwapSidesCommand}" /> -->
-                        <!--     </ContextMenu> -->
-                        <!-- </Border.ContextMenu> -->
-                        <Grid RowDefinitions="*,Auto" RowSpacing="5">
-                            <UniformGrid Columns="2">
-                                <Image Classes.Deleted="{Binding Deleted}" HorizontalAlignment="Right"
-                                       Source="{Binding Left.Thumbnail^}" />
-                                <Image Classes.Deleted="{Binding Deleted}" HorizontalAlignment="Left"
-                                       Source="{Binding Right.Thumbnail^}" />
-                            </UniformGrid>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </ListBox.Styles>
 
-                            <i:Icon Grid.Row="0" ZIndex="1" Value="fa-solid fa-trash-can" Foreground="Crimson"
-                                    HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="40" Margin="10"
-                                    IsVisible="{Binding Deleted}" />
+                <ListBox.DataTemplates>
+                    <DataTemplate DataType="vm:AeArchiveFileViewModel">
+                        <Border
+                            Background="Transparent" MaxWidth="300" MaxHeight="330"
+                            Width="300" Height="330" MinWidth="300" MinHeight="330" Padding="12 9 12 12">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete"
+                                              Classes.Deleted="{Binding Deleted}"
+                                              Command="{Binding ToggleDeleteCommand,FallbackValue={x:Null}}"
+                                              CommandParameter="{Binding .}" />
+                                    <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with next"
+                                              Command="{Binding JoinWithNextCommand,FallbackValue={x:Null}}"
+                                              CommandParameter="{Binding .}" />
+                                    <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Join with previous"
+                                              Command="{Binding JoinWithPreviousCommand,FallbackValue={x:Null}}"
+                                              CommandParameter="{Binding .}" />
+                                </ContextMenu>
+                            </Border.ContextMenu>
 
-                            <TextBlock Grid.Row="1" Text="{Binding Name}" ToolTip.Tip="{Binding Name}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ListBox.DataTemplates>
-        </ListBox>
-    </Grid>
+                            <Grid RowDefinitions="*,Auto" RowSpacing="5">
+                                <Image Classes.Deleted="{Binding Deleted}" Source="{Binding Thumbnail^}" />
+
+                                <i:Icon Grid.Row="0" ZIndex="1" Value="fa-solid fa-trash-can" Foreground="Crimson"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="40" Margin="10"
+                                        IsVisible="{Binding Deleted}" />
+
+                                <TextBlock Grid.Row="1" Text="{Binding Name}" ToolTip.Tip="{Binding OriginalName}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+
+                    <DataTemplate DataType="vm:AeArchiveJoinedFileViewModel">
+                        <Border
+                            Background="Transparent" MaxWidth="300" MaxHeight="330"
+                            Width="300" Height="330" MinWidth="300" MinHeight="330" Padding="12 9 12 12">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem i:MenuItem.Icon="fa-solid fa-trash-can" Header="Delete"
+                                              Classes.Deleted="{Binding Deleted}"
+                                              Command="{Binding ToggleDeleteCommand,FallbackValue={x:Null}}"
+                                              CommandParameter="{Binding .}" />
+                                    <MenuItem i:MenuItem.Icon="fa-solid fa-object-group" Header="Split into halves"
+                                              Command="{Binding SplitIntoHalvesCommand,FallbackValue={x:Null}}"
+                                              CommandParameter="{Binding .}" />
+                                    <MenuItem i:MenuItem.Icon="fa-solid fa-shuffle" Header="Swap sides"
+                                              Command="{Binding SwapSidesCommand}" />
+                                </ContextMenu>
+                            </Border.ContextMenu>
+
+                            <Grid RowDefinitions="*,Auto" RowSpacing="5">
+                                <UniformGrid Columns="2">
+                                    <Image Classes.Deleted="{Binding Deleted}" HorizontalAlignment="Right"
+                                           Source="{Binding Left.Thumbnail^}" />
+                                    <Image Classes.Deleted="{Binding Deleted}" HorizontalAlignment="Left"
+                                           Source="{Binding Right.Thumbnail^}" />
+                                </UniformGrid>
+
+                                <i:Icon Grid.Row="0" ZIndex="1" Value="fa-solid fa-trash-can" Foreground="Crimson"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="40" Margin="10"
+                                        IsVisible="{Binding Deleted}" />
+
+                                <TextBlock Grid.Row="1" Text="{Binding Name}" ToolTip.Tip="{Binding Name}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.DataTemplates>
+            </ListBox>
+        </Grid>
+    </DockPanel>
 </UserControl>

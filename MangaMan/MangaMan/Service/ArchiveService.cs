@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
@@ -51,13 +52,42 @@ public class ArchiveFolder
     }
 }
 
-public record ArchiveFile(string Name, string Path)
+public static partial class ComparerHelper
+{
+    public static int CompareNumericFileNames(string? x, string? y)
+    {
+        if (ReferenceEquals(x, y)) return 0;
+        if (y is null) return 1;
+        if (x is null) return -1;
+
+        return (ExtractDigits(x), ExtractDigits(y)) switch
+        {
+            ({ } a, { } b) => int.Parse(a) - int.Parse(b),
+            _ => string.Compare(x, y, StringComparison.Ordinal),
+        };
+    }
+
+    private static readonly Regex LastDigits = MyRegex();
+
+    private static string? ExtractDigits(string name)
+    {
+        return LastDigits.IsMatch(name) ? LastDigits.Match(name).Value : null;
+    }
+
+    [GeneratedRegex(@"\d+(?=\.\w{3,}$)")]
+    private static partial Regex MyRegex();
+}
+
+public partial record ArchiveFile(string Name, string Path) : IComparable<ArchiveFile>
 {
     public bool IsImage { get; } = ArchiveService.IsImageFile(Name);
+
+    public int CompareTo(ArchiveFile? other) => ComparerHelper.CompareNumericFileNames(Name, other?.Name);
 }
 
 public interface IArchiveReader
 {
+    public string Path { get; }
     public IReadOnlyCollection<string> Images { get; }
 
     public Task<byte[]?> ReadAllBytesAsync(string path, CancellationToken cancellationToken = default);
@@ -69,11 +99,13 @@ public class ZipArchiveReader : IArchiveReader, IDisposable, IAsyncDisposable
 {
     private readonly ZipArchive _archive;
     private readonly List<string> _images;
+    public string Path { get; }
 
-    private ZipArchiveReader(ZipArchive archive, List<string> images)
+    private ZipArchiveReader(ZipArchive archive, List<string> images, string path)
     {
         _archive = archive;
         _images = images;
+        Path = path;
     }
 
     public static ZipArchiveReader Create(string path)
@@ -82,10 +114,10 @@ public class ZipArchiveReader : IArchiveReader, IDisposable, IAsyncDisposable
         var images = archive.Entries
             .Where(entry => ArchiveService.IsImageFile(entry.Name))
             .Select(entry => entry.FullName)
-            .Order()
+            .Order(Comparer<string>.Create(ComparerHelper.CompareNumericFileNames))
             .ToList();
 
-        return new ZipArchiveReader(archive, images);
+        return new ZipArchiveReader(archive, images, path);
     }
 
     public void Dispose()
@@ -142,11 +174,12 @@ public class ZipArchiveReader : IArchiveReader, IDisposable, IAsyncDisposable
 
                 folder = folder.Folders.FirstOrDefault(f => f.Name == entry.FullName[part])
                          ?? new ArchiveFolder() { Name = entry.FullName[part] };
+                folder.Folders.Add(folder);
             }
         }
 
-        root.Files = root.Files.OrderBy(f => f.Name).ToHashSet();
-        root.Files = root.Files.OrderBy(f => f.Name).ToHashSet();
+        root.Files = root.Files.Order().ToHashSet();
+        root.Folders = root.Folders.OrderBy(f => f.Name).ToHashSet();
 
         return root;
     }
@@ -156,11 +189,13 @@ public class FolderArchiveReader : IArchiveReader
 {
     private readonly DirectoryInfo _folder;
     private readonly List<string> _images;
+    public string Path { get; }
 
-    private FolderArchiveReader(DirectoryInfo folder, List<string> images)
+    private FolderArchiveReader(DirectoryInfo folder, List<string> images, string path)
     {
         _folder = folder;
         _images = images;
+        Path = path;
     }
 
     public static FolderArchiveReader Create(string path)
@@ -169,10 +204,10 @@ public class FolderArchiveReader : IArchiveReader
         var images = folder.EnumerateFiles()
             .Where(ArchiveService.IsImageFile)
             .Select(f => f.Name)
-            .Order()
+            .Order(Comparer<string>.Create(ComparerHelper.CompareNumericFileNames))
             .ToList();
 
-        return new FolderArchiveReader(folder, images);
+        return new FolderArchiveReader(folder, images, path);
     }
 
     IReadOnlyCollection<string> IArchiveReader.Images => _images;
@@ -182,7 +217,7 @@ public class FolderArchiveReader : IArchiveReader
         if (!_images.Contains(path))
             return null;
 
-        var fileInfo = new FileInfo(Path.Combine(_folder.FullName, path));
+        var fileInfo = new FileInfo(System.IO.Path.Combine(_folder.FullName, path));
         var bytes = new byte[fileInfo.Length];
 
         await using var stream = fileInfo.OpenRead();
@@ -200,7 +235,7 @@ public class FolderArchiveReader : IArchiveReader
             Name = folder.Name,
             Files = folder.EnumerateFiles()
                 .Select(f => new ArchiveFile(f.Name, f.FullName[(_folder.FullName.Length + 1)..]))
-                .OrderBy(f => f.Name)
+                .Order()
                 .ToHashSet(),
             Folders = folder.EnumerateDirectories()
                 .Select(ReadFolderTree)

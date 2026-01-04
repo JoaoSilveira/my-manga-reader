@@ -5,5 +5,10 @@ namespace MangaMan.ViewModels;
 
 public abstract class ViewModelBase : ObservableObject
 {
-    public MainWindowViewModel MainWindowVM { get; set; }
+    protected MainWindowViewModel MainWindowVM { get; }
+
+    protected ViewModelBase(MainWindowViewModel mainWindowVM)
+    {
+        MainWindowVM = mainWindowVM;
+    }
 }

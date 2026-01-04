@@ -28,6 +28,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.1" />
+        <PackageReference Include="NetVips" Version="3.2.0" />
         <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2" />
     </ItemGroup>
 </Project>

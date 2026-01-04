@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MangaMan.ViewModels;
 
-public partial class HomeViewModel : PageViewModelBase
+public partial class HomeViewModel(MainWindowViewModel mainVm) : PageViewModelBase(mainVm)
 {
     public override string HeaderText => "Home";
 
@@ -82,7 +82,7 @@ public partial class HomeViewModel : PageViewModelBase
 
         if (vm.LoadArchivesCommand.CanExecute(null))
             await vm.LoadArchivesCommand.ExecuteAsync(null);
-        
+
         if (FilterText == string.Empty)
             OnPropertyChanged(nameof(SelectedFolderArchives));
         else
@@ -102,9 +102,8 @@ public partial class HomeViewModel : PageViewModelBase
         var folders = new List<SyncFolderViewModel>();
         await foreach (var folder in folderIterator)
         {
-            folders.Add(new SyncFolderViewModel()
+            folders.Add(new SyncFolderViewModel(MainWindowVM)
             {
-                MainWindowVM = MainWindowVM,
                 SyncFolderId = folder.Id,
                 Name = folder.Name,
                 Path = folder.Path,

@@ -13,8 +13,6 @@ namespace MangaMan.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public required HomeViewModel HomeViewModel { get; set; }
-
     [ObservableProperty] private ObservableCollection<ViewModelBase> _tabs;
 
     [ObservableProperty] private bool _isWorking = false;
@@ -23,14 +21,14 @@ public partial class MainWindowViewModel : ObservableObject
 
     public static async Task<MainWindowViewModel> Create()
     {
-        var homeViewModel = new HomeViewModel();
         var vm = new MainWindowViewModel()
         {
-            SelectedTab = homeViewModel,
-            HomeViewModel = homeViewModel,
-            Tabs = [homeViewModel],
+            SelectedTab = null,
+            Tabs = [],
         };
-        
+        var homeViewModel = new HomeViewModel(vm);
+        vm.Tabs.Add(homeViewModel);
+
         await using var ctx = new MangaManDbContext();
         var openTagsIterator = ctx.OpenTabs
             .Include(t => t.MangaArchive)
@@ -38,9 +36,8 @@ public partial class MainWindowViewModel : ObservableObject
             .Select(tab =>
             {
                 var reader = ArchiveService.OpenArchive(tab.MangaArchive.Path);
-                return new ArchiveReaderViewModel(reader)
+                return new ArchiveReaderViewModel(vm, reader)
                 {
-                    MainWindowVM = vm,
                     ArchiveId = tab.MangaArchiveId,
                     Path = tab.MangaArchive.Path,
                     Name = tab.MangaArchive.Name,
@@ -54,7 +51,6 @@ public partial class MainWindowViewModel : ObservableObject
         await foreach (var tab in openTagsIterator)
             vm.Tabs.Add(tab);
 
-        homeViewModel.MainWindowVM = vm;
         return vm;
     }
 
@@ -69,7 +65,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         var reader = ArchiveService.OpenArchive(path);
-        var archiveVm = new ArchiveReaderViewModel(reader)
+        var archiveVm = new ArchiveReaderViewModel(this, reader)
         {
             ArchiveId = archiveId,
             Path = path,
@@ -108,12 +104,9 @@ public partial class MainWindowViewModel : ObservableObject
         await using var ctx = new MangaManDbContext();
         var archive = await ctx.MangaArchives
             .FirstAsync(t => t.Id == archiveId);
-            
+
         var reader = ArchiveService.OpenArchive(archive.Path);
-        var vm = new ArchiveEditorViewModel(archiveId, reader)
-        {
-            MainWindowVM = this,
-        };
+        var vm = new ArchiveEditorViewModel(this, archiveId, reader);
 
         Tabs.Add(vm);
         SelectedTab = vm;
@@ -121,11 +114,14 @@ public partial class MainWindowViewModel : ObservableObject
 
     public async Task CloseTab(ViewModelBase dataContext)
     {
+        if (dataContext is PageViewModelBase page && !(await page.CanCloseAsync()))
+            return;
+
         switch (dataContext)
         {
             case ArchiveEditorViewModel:
                 Tabs.Remove(dataContext);
-                return;
+                break;
             case ArchiveReaderViewModel reader:
             {
                 await using var ctx = new MangaManDbContext();
@@ -136,6 +132,16 @@ public partial class MainWindowViewModel : ObservableObject
                 Tabs.Remove(dataContext);
                 break;
             }
+        }
+
+        switch (dataContext)
+        {
+            case IAsyncDisposable d:
+                await d.DisposeAsync();
+                break;
+            case IDisposable d:
+                d.Dispose();
+                break;
         }
     }
 }

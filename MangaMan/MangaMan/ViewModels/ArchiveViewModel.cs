@@ -16,6 +16,10 @@ public partial class ArchiveViewModel : ViewModelBase
 
     [ObservableProperty] private bool _wasRead;
 
+    public ArchiveViewModel(MainWindowViewModel mainVm) : base(mainVm)
+    {
+    }
+
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task OpenArchive()
     {
@@ -32,7 +36,7 @@ public partial class ArchiveViewModel : ViewModelBase
         await ctx.SaveChangesAsync();
         WasRead = !WasRead;
     }
-    
+
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task EditArchive()
     {

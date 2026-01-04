@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MangaMan.ViewModels;
 
-public partial class ArchiveReaderViewModel : PageViewModelBase
+public partial class ArchiveReaderViewModel : PageViewModelBase, IDisposable
 {
     public override string HeaderText => Name;
 
@@ -44,7 +44,7 @@ public partial class ArchiveReaderViewModel : PageViewModelBase
         }
     }
 
-    public ArchiveReaderViewModel(IArchiveReader reader)
+    public ArchiveReaderViewModel(MainWindowViewModel mainVm, IArchiveReader reader) : base(mainVm)
     {
         Reader = reader;
         _selectedIndex = -1;
@@ -129,5 +129,12 @@ public partial class ArchiveReaderViewModel : PageViewModelBase
         var bitmap = bytes is not null ? new Bitmap(new MemoryStream(bytes)) : null;
 
         return bitmap;
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        foreach (var image in _cache.Values)
+            image?.Dispose();
     }
 }

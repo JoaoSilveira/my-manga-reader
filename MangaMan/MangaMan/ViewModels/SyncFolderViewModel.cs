@@ -8,7 +8,7 @@ using MangaMan.Models;
 
 namespace MangaMan.ViewModels;
 
-public partial class SyncFolderViewModel : ViewModelBase
+public partial class SyncFolderViewModel(MainWindowViewModel mainVm) : ViewModelBase(mainVm)
 {
     public required Guid SyncFolderId { get; init; }
     public required string Name { get; init; }
@@ -31,9 +31,8 @@ public partial class SyncFolderViewModel : ViewModelBase
         Archives = await ctx.MangaArchives
             .Where(a => a.SyncFolderId == SyncFolderId)
             .ToAsyncEnumerable()
-            .Select(a => new ArchiveViewModel()
+            .Select(a => new ArchiveViewModel(MainWindowVM)
             {
-                MainWindowVM = MainWindowVM,
                 ArchiveId = a.Id,
                 Name = a.Name,
                 Path = a.Path,
