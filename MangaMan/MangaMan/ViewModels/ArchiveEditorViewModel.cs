@@ -345,7 +345,7 @@ public partial class ArchiveEditorViewModel : PageViewModelBase, IDisposable
                     await SaveZipArchive(archive, c, prefix + $"/{c.Name}");
                     break;
                 }
-                case AeArchiveFileViewModel f:
+                case AeArchiveFileViewModel { Deleted: false } f:
                 {
                     var newEntry = archive.CreateEntry(prefix + f.Name);
                     var bytes = (await _reader.ReadAllBytesAsync(f.Path))!;
@@ -354,7 +354,7 @@ public partial class ArchiveEditorViewModel : PageViewModelBase, IDisposable
                     newStream.Write(bytes, 0, bytes.Length);
                     break;
                 }
-                case AeArchiveJoinedFileViewModel j:
+                case AeArchiveJoinedFileViewModel { Deleted: false } j:
                 {
                     var newEntry = archive.CreateEntry(prefix + j.Name);
                     using var leftStream = new MemoryStream((await _reader.ReadAllBytesAsync(j.Left.Path))!);
@@ -365,29 +365,6 @@ public partial class ArchiveEditorViewModel : PageViewModelBase, IDisposable
                     using var joined = left.Join(right, Enums.Direction.Horizontal);
                     using var outputStream = newEntry.Open();
                     joined.WriteToStream(outputStream, j.Name);
-                    // var leftStream = new MemoryStream((await _reader.ReadAllBytesAsync(j.Left.Path))!);
-                    // using var left = new Bitmap(leftStream);
-                    // var rightStream = new MemoryStream((await _reader.ReadAllBytesAsync(j.Right.Path))!);
-                    // using var right = new Bitmap(rightStream);
-                    // using var output = new RenderTargetBitmap(
-                    //     new PixelSize(
-                    //         left.PixelSize.Width + right.PixelSize.Width,
-                    //         Math.Max(left.PixelSize.Height, right.PixelSize.Height)
-                    //     ), new Vector(
-                    //         Math.Max(left.Dpi.X, right.Dpi.X),
-                    //         Math.Max(left.Dpi.Y, right.Dpi.Y)
-                    //     )
-                    // );
-                    //
-                    // using (var context = output.CreateDrawingContext())
-                    // {
-                    //     context.DrawImage(left, new Rect(0, 0, left.PixelSize.Width, left.PixelSize.Height));
-                    //     context.DrawImage(right,
-                    //         new Rect(left.PixelSize.Width, 0, right.PixelSize.Width, right.PixelSize.Height));
-                    // }
-                    //
-                    // await using var outputStream = newEntry.Open();
-                    // output.Save(outputStream);
                     break;
                 }
             }
@@ -419,12 +396,12 @@ public partial class ArchiveEditorViewModel : PageViewModelBase, IDisposable
                     await SaveFolderArchive(c, Path.Combine(prefix, c.Name));
                     break;
                 }
-                case AeArchiveFileViewModel f:
+                case AeArchiveFileViewModel { Deleted: false } f:
                 {
                     File.Move(Path.Combine(_reader.Path, f.Path), Path.Combine(prefix, f.Name));
                     break;
                 }
-                case AeArchiveJoinedFileViewModel j:
+                case AeArchiveJoinedFileViewModel { Deleted: false } j:
                 {
                     using var leftStream = new MemoryStream((await _reader.ReadAllBytesAsync(j.Left.Path))!);
                     using var left = NetVips.Image.NewFromStream(leftStream, access: NetVips.Enums.Access.Sequential);
@@ -434,43 +411,10 @@ public partial class ArchiveEditorViewModel : PageViewModelBase, IDisposable
                     using var joined = left.Join(right, Enums.Direction.Horizontal);
                     joined.WriteToFile(Path.Combine(prefix, j.Name));
                     break;
-                }
+                } 
             }
         }
     }
-
-    // public WriteableBitmap ProcessAndConvert(string path1, string path2)
-    // {
-    //     // 1. Load with sequential access (uses very little RAM)
-    //     using var img1 = Image.NewFromFile(path1, access: Enums.Access.Sequential);
-    //     using var img2 = Image.NewFromFile(path2, access: Enums.Access.Sequential);
-    //
-    //     // 2. Join
-    //     using var joined = img1.Join(img2, Enums.Direction.Horizontal);
-    //
-    //     // 3. Ensure format is Avalonia-ready (BGRA, 8-bit)
-    //     // Add alpha channel if missing, and ensure it's Unsigned Char
-    //     using var final = joined.HasAlpha() 
-    //         ? joined.Cast(Enums.BandFormat.Uchar) 
-    //         : joined.Bandjoin(255).Cast(Enums.BandFormat.Uchar);
-    //
-    //     // 4. Materialize to Avalonia
-    //     double res = img1.Xres * 25.4; // Convert pixels/mm to DPI
-    //     var bitmap = new WriteableBitmap(
-    //         new PixelSize(final.Width, final.Height),
-    //         new Vector(res, res),
-    //         PixelFormat.Bgra8888,
-    //         AlphaFormat.Unpremul);
-    //
-    //     using (var fb = bitmap.Lock())
-    //     {
-    //         // Write directly from VIPS to the pointer address
-    //         // This is the fastest way to bridge the two libraries
-    //         final.WriteToMemory(fb.Address);
-    //     }
-    //
-    //     return bitmap;
-    // }
 
     private void OnRootFolderPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
