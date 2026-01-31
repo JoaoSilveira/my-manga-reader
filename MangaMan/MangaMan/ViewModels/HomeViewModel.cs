@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,14 +19,21 @@ public partial class HomeViewModel(MainWindowViewModel mainVm) : PageViewModelBa
 {
     public override string HeaderText => "Home";
 
-    [NotifyCanExecuteChangedFor(nameof(AddFolderCommand))] [ObservableProperty]
-    private bool _isWorking = false;
-
-    public bool IsNotWorking => !IsWorking;
-
     [ObservableProperty] private List<SyncFolderViewModel> _syncFolders = [];
+    
+    public Vector ScrollOffset { get; set; } = new(0, 0);
 
-    [ObservableProperty] private SyncFolderViewModel? _selectedSyncFolder;
+    public SyncFolderViewModel? SelectedSyncFolder
+    {
+        get;
+        set
+        {
+            if (value is null && field is not null)
+                return;
+
+            SetProperty(ref field, value);
+        }
+    }
 
     public IEnumerable<ArchiveViewModel>? SelectedFolderArchives =>
         SelectedSyncFolder?.Archives
@@ -36,16 +44,23 @@ public partial class HomeViewModel(MainWindowViewModel mainVm) : PageViewModelBa
 
     public async Task Initialize()
     {
-        IsWorking = true;
         SyncFolders = await ReadFoldersFromDbAsync();
-        IsWorking = false;
     }
 
-    [RelayCommand(CanExecute = nameof(IsNotWorking))]
+    public void MakeSelectionVisible()
+    {
+        SelectedSyncFolder?.IsSelected = true;
+        var folder = SelectedSyncFolder?.Parent;
+        while (folder is not null)
+        {
+            folder.IsExpanded = true;
+            folder = folder.Parent;
+        }
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task AddFolder(IStorageProvider storageProvider)
     {
-        IsWorking = true;
-
         var folders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions()
         {
             AllowMultiple = true,
@@ -53,10 +68,7 @@ public partial class HomeViewModel(MainWindowViewModel mainVm) : PageViewModelBa
         });
 
         if (folders.Count < 1)
-        {
-            IsWorking = false;
             return;
-        }
 
         await using var ctx = new MangaManDbContext();
         foreach (var folder in folders)
@@ -67,8 +79,6 @@ public partial class HomeViewModel(MainWindowViewModel mainVm) : PageViewModelBa
 
         await ctx.SaveChangesAsync();
         SyncFolders = await ReadFoldersFromDbAsync(ctx);
-
-        IsWorking = false;
     }
 
     protected override async void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -93,8 +103,9 @@ public partial class HomeViewModel(MainWindowViewModel mainVm) : PageViewModelBa
         await ReadFoldersFromDbAsync(new MangaManDbContext());
 
     private async Task<List<SyncFolderViewModel>> ReadFoldersFromDbAsync(MangaManDbContext ctx,
-        Guid? parentId = null)
+        SyncFolderViewModel? parent = null)
     {
+        var parentId = parent?.SyncFolderId;
         var folderIterator = ctx.SyncFolders
             .Where(f => f.ParentId == parentId)
             .ToAsyncEnumerable();
@@ -102,13 +113,16 @@ public partial class HomeViewModel(MainWindowViewModel mainVm) : PageViewModelBa
         var folders = new List<SyncFolderViewModel>();
         await foreach (var folder in folderIterator)
         {
-            folders.Add(new SyncFolderViewModel(MainWindowVM)
+            var newFolder = new SyncFolderViewModel(MainWindowVM)
             {
+                Parent = parent,
                 SyncFolderId = folder.Id,
                 Name = folder.Name,
                 Path = folder.Path,
-                Children = await ReadFoldersFromDbAsync(ctx, folder.Id),
-            });
+            };
+            folders.Add(newFolder);
+            newFolder.Children =
+                new ObservableCollection<SyncFolderViewModel>(await ReadFoldersFromDbAsync(ctx, newFolder));
         }
 
         return folders;

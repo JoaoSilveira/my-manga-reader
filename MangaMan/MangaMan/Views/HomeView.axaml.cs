@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using MangaMan.ViewModels;
 
@@ -32,9 +34,9 @@ public partial class HomeView : UserControl
         vm.OpenArchiveCommand.Execute(null);
     }
 
-    protected override async void OnLoaded(RoutedEventArgs e)
+    protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
-        await (DataContext as HomeViewModel)!.Initialize();
+        (DataContext as HomeViewModel)!.MakeSelectionVisible();
     }
 }

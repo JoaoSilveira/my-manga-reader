@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MangaMan.Models;
@@ -27,6 +28,7 @@ public partial class MainWindowViewModel : ObservableObject
             Tabs = [],
         };
         var homeViewModel = new HomeViewModel(vm);
+        await homeViewModel.Initialize();
         vm.Tabs.Add(homeViewModel);
 
         await using var ctx = new MangaManDbContext();

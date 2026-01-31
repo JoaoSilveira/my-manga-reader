@@ -20,6 +20,20 @@
 
             <TreeView Name="SyncFolderList" Grid.Row="2" ItemsSource="{Binding SyncFolders}"
                       SelectedItem="{Binding SelectedSyncFolder, Mode=TwoWay}">
+                <TreeView.Styles>
+                    <Style Selector="TreeViewItem" x:DataType="vm:SyncFolderViewModel">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                        <Setter Property="ContextMenu">
+                            <Setter.Value>
+                                <ContextMenu>
+                                    <MenuItem Command="{Binding RefreshCommand}" Header="Refresh"
+                                              i:MenuItem.Icon="fa-solid fa-arrows-rotate" />
+                                </ContextMenu>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TreeView.Styles>
                 <TreeView.ItemTemplate>
                     <TreeDataTemplate DataType="vm:SyncFolderViewModel" ItemsSource="{Binding Children}">
                         <TextBlock Text="{Binding Name}" ToolTip.Tip="{Binding Path}" />
